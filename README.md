@@ -28,6 +28,11 @@ The only runtime dependency is [axios](https://npm.im/axios) package, which was 
 
 # Usage
 
+Before the start, to use API you need to:
+- sign up at [website](https://fusionbrain.ai/en/)
+- visit [API section](https://fusionbrain.ai/en/keys/) and create pair of API key and Secret key. You can [check details](https://fusionbrain.ai/docs/en/doc/poshagovaya-instrukciya-po-upravleniu-api-kluchami/) if needed.
+- save keys pair, you will need to specify them to use library
+
 ## Complete example
 
 ```js
@@ -312,3 +317,7 @@ When I've tested requests directly for availability info API, i've received next
 ```
 
 I haven't faced other statuses during development, so `AvailabilityInfo` class checks for both `status` and `model_status` fields.
+
+## Rate limits
+
+Right now (August 2024) docs doesn't have any information about this.

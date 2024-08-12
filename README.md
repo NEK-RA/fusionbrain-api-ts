@@ -40,7 +40,7 @@ Before the start, to use API you need to:
 // import { writeFile} from "node:fs/promises";
 // import { FusionBrain, Prompt } from "fusionbrain-api";
 const { writeFile } = require("node:fs/promises");
-const { FusionBrain, Prompt } = require("fusionbrain-api");
+const { FusionBrain } = require("fusionbrain-api");
 
 const pause = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -54,28 +54,33 @@ const fb = new FusionBrain("api key", "secret key");
     // load and show styles
     let styles = await fb.getStyles();
     console.log(`Styles: ${styles.map(item => item.name).join(", ")}`);
-
+    
     // check model readiness
     let kandinsky = models[0].id;
-    let status = await fb.checkModel(kandinsky);
-    if(status.isReady()){
+    if(await fb.isReady(kandinsky)){
+        // save prompt as constant to use later as filename
+        const prompt = "Dancing cat";
         // request generation and show task uuid
-        let task = await fb.generate(
-            Prompt.makeDefault(kandinsky, "Dancing cat")
-        );
-        console.log(`Task uuid: ${task.uuid}`);
-
-        // wait for ~15 seconds before periodical checks
-        await pause(10 * 1000);
-        while(!task.isFinished()){
-            await pause(5 * 1000);
-            task = await fb.checkTask(task.uuid);
-        }
-
-        // when generation finished and success, save it to file
-        if(task.isSuccess()){
-            let imgBuf = Buffer.from(task.images[0], "base64");
-            await writeFile(`${task.uuid}.jpg`, imgBuf);
+        let generation = await fb.generate(kandinsky, prompt, {
+            style: styles[1].name
+        });
+        if(generation.accepted === true){
+            let task = generation.task;
+            console.log(`Task uuid: ${task.uuid}`);
+            // wait for ~15 seconds then check periodicaly
+            await pause(10 * 1000);
+            while(!task.isFinished()){
+                await pause(5 * 1000);
+                task = await fb.checkTask(task.uuid);
+            }
+    
+            // when generation finished and success, save it to file
+            if(task.isSuccess()){
+                let imgBuf = Buffer.from(task.images[0], "base64");
+                await writeFile(`${prompt} (${models[0].name}, ${styles[1].titleEn}, ${task.uuid}).jpg`, imgBuf);
+            }
+        }else{
+            console.log(`Generation rejected with next response:\n${generation.reason}`);
         }
     }
 })();
@@ -161,23 +166,33 @@ These are covered with `StyleInfo` class in case you will need it typed for any 
 
 ## Check model availability
 
-API docs mention that model may be unavailable due to high demand and it's the only value shown for status. During development it was always available, so other states are unknown.
+API docs mention that model may be unavailable due to high demand and it's the only value shown for status. During development it was always available (status `ACTIVE`), so other states are almost unknown.
 
 ```js
 // assuming you've created client and got models list
 const kandinsky = models[0].id;
-const availability = await client.checkModel(kandinsky);
-```
-
-Model availability covered by `AvailabilityInfo` class, which has 2 constants (known values) and `isReady` method for quick check:
-
-```js
-if(availability.isReady()){
-    // It compares availability.status with AvailabilityInfo.ACTIVE
-    // Another known value is AvailabilityInfo.DISABLED_BY_QUEUE
-    // work with model
+if(await client.isReady(kandinsky)){
+  // do whatever you want
 }
 ```
+
+By default it returns just `true` (if status is `ACTIVE`) or `false` in other cases. If you need more details, then pass `true` as second argument:
+
+```js
+// assuming you've created client and got models list
+const kandinsky = models[0].id;
+try{
+  if(await client.isReady(kandinsky)){
+    // do whatever you want
+  }
+}catch(err){
+  if(err.code == FusionBrainErrorCode.MODEL_NOT_READY){
+    console.log(err.body);
+  }
+}
+```
+
+In this case `FusionBrainError` will be thrown with response body in `body` field of error object.
 
 ## Image generation
 
@@ -186,42 +201,45 @@ Short form:
 ```js
 // assuming you've created client and got models list
 const kandinsky = models[0].id;
-let task = await client.generate(
-    Prompt.makeDefault(kandinsky, "Dancing cat")
-);
+let generation = await client.generate(kandinsky, "Dancing cat");
 ```
 
-In this case you need to specify only model and prompt. Other options are default: no style, 1024x1024 size, empty negative prompt. If you need to provide style, size and negative prompt - you need to create `Prompt` object:
+In this case you need to specify only model and prompt. Other options are default: no style, 768x768 size, empty negative prompt. If you need to provide style, size and negative prompt - you need to pass an object with necessary options as third argument:
 
 ```js
 // assuming you've created client and got models list
 const kandinsky = models[0].id;
-const prompt = new Prompt(
-    kandinsky,      // model id
-    "UHD",          // style
-    "Dancing cat",  // prompt
-    "blur",         // negative prompt
-    1024,           // width
-    1024,           // height
-);
-let task = await client.generate(prompt);
+let generation = await client.generate(kandinsky, "Dancing cat", {
+  style: "UHD",
+  negative: "blur",
+  width: 1024,
+  heigh: 512
+});
 ```
 
-**Notice:** despite the fact that `Prompt` constructor provides ability to specify amount of images, only 1 is possible as of August 2024. [See the docs for `numImages` info](#disclaimer) before using it.
+**Notice:** despite the fact that prompt options provide ability to specify amount of images, only 1 is possible as of August 2024. [See the docs for `numImages` info](#disclaimer) before using it.
 
-`generate` method can return 2 types of result:
+`generate` method can return `Generation` object which has `accepted` field and depending on it's value there will be `task` field (if `true`) or `reason` (if false):
 
-- `AvailabilityInfo` object (according to docs) when for any reason model is not available for usage
-- `GenerationTask` object on success
+```js
+// generation variable is result of previous `generate`:
+if(generation.accepted === true){
+  // here is `task` field available
+  console.log(generation.task.uuid);
+}else{
+  // here is `reason` field available
+  console.log(generation.reason);
+}
 
-`GenerationTask` object includes `uuid` field, which you will use to update info about task
+```
 
 ## Get image result
 
 Generation takes some time, so at first you receive taks's `uuid` and then use it later to fetch actual task status
 
 ```js
-// assuming you've created client and created a generation task
+// assuming you've requested generation and it was accepted
+let task = generation.task;
 task = await client.checkTask(task.uuid);
 // see if you received requested image
 if(task.isSuccess()){
@@ -249,11 +267,11 @@ Or save to disk:
 import * as fs from "node:fs/promises";
 // created client, created task
 // waited for completion, checked for success
-let imgBuf = Buffer.from(task.images![0], "base64");
+let imgBuf = Buffer.from(task.images[0], "base64");
 await fs.writeFile(`${task.uuid}.jpg`, imgBuf);
 ```
 
-**Notice**: generation result deleted from server after first fetch of final result (`isFinished` method). On next check `FusionBrainError` will be thrown because request for task status will return HTTP status code 404. See more in [nuances](#nuances)
+**Notice**: generation result deleted from server after first fetch of final result. On next check `FusionBrainError` will be thrown because request for task status will return HTTP status code 404. See more in [nuances](#nuances)
 
 ## About errors
 
@@ -274,6 +292,10 @@ These are mentioned in docs, but not expected to appear in current implementatio
 - **Any other error** - no other error expected to be caused by client side
 
 # Nuances
+
+## Rate limits
+
+Docs has no info about that, so unknown.
 
 ## Image expiration
 
@@ -297,27 +319,3 @@ Right now (August 2024) according to docs:
 Interesting thing is that this option presented at all, because the only possible value for now is 1. Moreover it is not required for successfull generation. 
 
 Since it's presented, probably it may be changed in near future. That's why I've left ability to specify amount of images, if FusionBrain will provide ability to request more than 1 image at once without breaking changes in other parts of API.
-
-## Model status
-
-There's not much info about model availability in docs. FusionBrain provided only URL to check and mentioned that availability info can be sent in response to generation request. For this case they've provided next example:
-
-```json
-{
-  "model_status": "DISABLED_BY_QUEUE"
-}
-```
-
-When I've tested requests directly for availability info API, i've received next JSON:
-
-```json
-{
-  "status": "ACTIVE"
-}
-```
-
-I haven't faced other statuses during development, so `AvailabilityInfo` class checks for both `status` and `model_status` fields.
-
-## Rate limits
-
-Right now (August 2024) docs doesn't have any information about this.

@@ -5,7 +5,7 @@
  * - `isCensored` to check if prompt was censored or not
  * - `isSuccess` to check if you've got what you wanted (status DONE, not censored, contain images)
  */
-export class GenerationTask{
+export class Task{
     /** Statuses of generation task */
     public static readonly INITIAL: string = "INITIAL";
     public static readonly PROCESSING: string = "PROCESSING";
@@ -51,9 +51,9 @@ export class GenerationTask{
      * - FAIL: brings errorDescription instead
      * Throws TypeError if missing necessary fields or have wrong types for them
      * @param {any} jsonObject 
-     * @returns {GenerationTask}
+     * @returns {Task}
      */
-    public static create(jsonObject: any): GenerationTask{
+    public static create(jsonObject: any): Task{
         const data = {
             uuid: "",
             status: "",
@@ -67,7 +67,7 @@ export class GenerationTask{
         const statusOk = ("status" in jsonObject) && (typeof(jsonObject.status) == "string");
         if(!(uuidOk && statusOk)){
             throw new TypeError(`
-GenerationTask.create: passed object doesn't match required structure:
+Task.create: passed object doesn't match required structure:
 uuid (string) - ${uuidOk ? "found" : "missing"}
 status (string) - ${statusOk ? "found" : "missing"}
             `.trim());
@@ -93,7 +93,7 @@ status (string) - ${statusOk ? "found" : "missing"}
             data.generationTime = jsonObject.generationTime;
         }
 
-        return new GenerationTask(
+        return new Task(
             data.uuid,
             data.status,
             data.images,
@@ -108,7 +108,7 @@ status (string) - ${statusOk ? "found" : "missing"}
      * @returns {boolean}
      */
     public isFinished(): boolean{
-        return this.status == GenerationTask.DONE || this.status == GenerationTask.FAIL;
+        return this.status == Task.DONE || this.status == Task.FAIL;
     }
 
     /**
@@ -127,7 +127,7 @@ status (string) - ${statusOk ? "found" : "missing"}
      * @returns {boolean}
      */
     public isSuccess(): boolean{
-        const done = this.status == GenerationTask.DONE;
+        const done = this.status == Task.DONE;
         const notCensored = !this.isCensored();
         const gotImages = this.images != undefined;
         if(done && notCensored && gotImages){

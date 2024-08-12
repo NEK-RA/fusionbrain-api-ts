@@ -1,4 +1,4 @@
 export * from "./response_entities";
-export { Prompt } from "./Prompt";
 export * from "./FusionBrainError";
+export * from "./other_types";
 export { FusionBrain } from "./FusionBrain";

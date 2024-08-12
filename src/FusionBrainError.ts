@@ -5,37 +5,39 @@ export enum FusionBrainErrorCode{
     EXPIRED,
     UNAUTHORIZED,
     LONG_PROMPT_OR_BAD_REQUEST,
+    MODEL_NOT_READY,
     UNSUPPORTED_MEDIA,
     UNEXPECTED
 };
 
 /**
- * Class to cover HTTP errors which are expected (or not) to happen.
- * Includes read-only field `code`, which can be compared with values from FusionBrainErrorCode enum. 
- * @see {@link FusionBrainErrorCode}
+ * Class to cover HTTP and other errors which are expected (or not) to happen.
+ * Includes read-only field `code`, which can be compared with values from FusionBrainErrorCode enum.
+ * If `code` equals to `FusionBrainErrorCode.MODEL_NOT_READY` or `FusionBrainErrorCode.UNEXPECTED`, then also `body` field presented, which contain HTTP response body
  */
 export class FusionBrainError extends Error{
     readonly code: FusionBrainErrorCode;
-
+    readonly body?: string;
     /**
      * Constructor which sets predefined error code for instance.
      * @param {string} message 
      * @param {FusionBrainErrorCode} code - one of the values from FusionBrainErrorCode enum
      */
-    constructor(message: string, code: FusionBrainErrorCode){
+    constructor(message: string, code: FusionBrainErrorCode, body?: string){
         super(message);
         this.code = code;
+        this.body = body;
     }
     
     /**
      * Predefined for any unexpected HTTP errors.
-     * Provides info about HTTP error faced and response body, as well as add's error stack for details.
+     * Provides info about HTTP error faced and response body, as well as add's error stack for details. Includes `body` field with HTTP response body
      * @param {string} methodName 
      * @param {AxiosError} err 
      * @returns {FusionBrainError}
      */
     public static unexpected(methodName: string, err: AxiosError){
-        const detailed = new FusionBrainError(`${methodName}: ${err.message}:\n${JSON.stringify(err.response?.data)}`, FusionBrainErrorCode.UNEXPECTED);
+        const detailed = new FusionBrainError(`${methodName}: ${err.message}:\n${JSON.stringify(err.response?.data)}`, FusionBrainErrorCode.UNEXPECTED, JSON.stringify(err.response?.data));
         detailed.stack += `Caused by: ${err.stack}`;
         return detailed;
     }
@@ -80,4 +82,7 @@ export class FusionBrainError extends Error{
         return new FusionBrainError(`${methodName}: Seems like API changed and library needs for update`, FusionBrainErrorCode.UNSUPPORTED_MEDIA);
     }
 
+    public static modelNotReady(methodName: string, body: string){
+        return new FusionBrainError(`${methodName}: requested model is not ready for usage now. See \`body\` field for details`, FusionBrainErrorCode.MODEL_NOT_READY, body);
+    }
 };

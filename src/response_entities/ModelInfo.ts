@@ -13,10 +13,10 @@ export class ModelInfo{
 
     /**
      * Constructor is private, because object creation is performed with `create` method with checking necessary fields
-     * @param {number} id 
-     * @param {string} name 
-     * @param {number} version 
-     * @param {string} type 
+     * @param {number} id       Numeric model id, which is used for generation
+     * @param {string} name     Model name
+     * @param {number} version  Model version, provided as floating number
+     * @param {string} type     Model type
      */
     private constructor(id: number, name: string, version: number, type: string){
         this.id = id;
@@ -31,7 +31,7 @@ export class ModelInfo{
      * - number: id, version 
      * - string: name, type
      * Throws TypeError if any of necessary fields are missing or have wrong types
-     * @param {any} jsonObject 
+     * @param {any} jsonObject  Response body
      * @returns {ModelInfo}
      */
     public static create(jsonObject: any): ModelInfo{

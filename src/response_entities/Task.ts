@@ -2,14 +2,17 @@
  * Class for the responses of generation request and check status of task request.
  * You can use: 
  * - `isFinished` to check if generation finished (statuses DONE and FAIL)
- * - `isCensored` to check if prompt was censored or not
+ * - `isCensored` to check if prompt was censored or not (censored can be true even when status DONE)
  * - `isSuccess` to check if you've got what you wanted (status DONE, not censored, contain images)
  */
 export class Task{
-    /** Statuses of generation task */
+    /** Generation request accepted and added to queue */
     public static readonly INITIAL: string = "INITIAL";
+    /** Generation is going */
     public static readonly PROCESSING: string = "PROCESSING";
+    /** Generation finished (still may be censored) */
     public static readonly DONE: string = "DONE";
+    /** Generation failed due to some error */
     public static readonly FAIL: string = "FAIL";
 
     /** Job's unique ID */
@@ -25,6 +28,15 @@ export class Task{
     /** Generation duration */
     readonly generationTime?: number;
 
+    /**
+     * Constructor is private, because object creation is performed with `create` method with checking necessary fields
+     * @param uuid              Unique task identifier (always presented)
+     * @param status            Task status (always presented)
+     * @param images            Array of base64 images (if status DONE)
+     * @param errorDescription  Error description (if status FAIL)
+     * @param censored          Flag if prompt was censored or not
+     * @param generationTime    Time spent on generation (if status DONE)
+     */
     private constructor(uuid: string, status: string, images?: string[], errorDescription?: string, censored?: boolean, generationTime?: number){
         this.uuid = uuid;
         this.status = status;
@@ -50,7 +62,7 @@ export class Task{
      * - DONE: brings images and generationTime
      * - FAIL: brings errorDescription instead
      * Throws TypeError if missing necessary fields or have wrong types for them
-     * @param {any} jsonObject 
+     * @param {any} jsonObject  Response body 
      * @returns {Task}
      */
     public static create(jsonObject: any): Task{

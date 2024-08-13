@@ -20,8 +20,8 @@ export class FusionBrainError extends Error{
     readonly body?: string;
     /**
      * Constructor which sets predefined error code for instance.
-     * @param {string} message 
-     * @param {FusionBrainErrorCode} code - one of the values from FusionBrainErrorCode enum
+     * @param {string} message              Description of error
+     * @param {FusionBrainErrorCode} code   One of the values from FusionBrainErrorCode enum
      */
     constructor(message: string, code: FusionBrainErrorCode, body?: string){
         super(message);
@@ -32,8 +32,8 @@ export class FusionBrainError extends Error{
     /**
      * Predefined for any unexpected HTTP errors.
      * Provides info about HTTP error faced and response body, as well as add's error stack for details. Includes `body` field with HTTP response body
-     * @param {string} methodName 
-     * @param {AxiosError} err 
+     * @param {string} methodName   Method name where error occured
+     * @param {AxiosError} err      Axios error object to extract message, response body and error stack
      * @returns {FusionBrainError}
      */
     public static unexpected(methodName: string, err: AxiosError){
@@ -45,7 +45,7 @@ export class FusionBrainError extends Error{
     /**
      * For case when missing api or secret key, or any of them have typo.
      * May appear on any request, except requesting available styles (which has separate URL and doesn't require auth).
-     * @param {string} methodName 
+     * @param {string} methodName   Method name where error occured
      * @returns {FusionBrainError}
      */
     public static unauthorized(methodName: string){
@@ -54,7 +54,7 @@ export class FusionBrainError extends Error{
 
     /**
      * For case when generation task is already expired and removed from server (server replies with 404 code).
-     * @param {string} methodName 
+     * @param {string} methodName   Method name where error occured
      * @returns {FusionBrainError}
      */
     public static taskExpired(methodName: string){
@@ -64,7 +64,7 @@ export class FusionBrainError extends Error{
     /**
      * May appear if text description (prompt + negative prompt) is too long.
      * If it's not the case, then most likely API changed and library is outdated.
-     * @param {string} methodName 
+     * @param {string} methodName   Method name where error occured
      * @returns {FusionBrainError}
      */
     public static tooLongPromptsOrBadRequest(methodName: string){
@@ -72,16 +72,22 @@ export class FusionBrainError extends Error{
     }
 
     /**
-     * Appeared during checks of API only when `Content-Type: application/json` were not specified explicitly
-     * for multipart form parameter (generation params). Fixed with using Blob, to make it work properly.
+     * Appears during checks of API only when `Content-Type: application/json` were not specified explicitly
+     * for multipart form parameter (generation params). Fixed with using Blob in FormData, to make it work properly.
      * If it appears again, then most likely API changed and library is outdated.
-     * @param {string} methodName 
+     * @param {string} methodName   Method name where error occured
      * @returns {FusionBrainError}
      */
     public static unsupportedMedia(methodName: string){
         return new FusionBrainError(`${methodName}: Seems like API changed and library needs for update`, FusionBrainErrorCode.UNSUPPORTED_MEDIA);
     }
 
+    /**
+     * Thrown on `FusionBrain.isReady` call instead of `false` value if second argument provided
+     * @param methodName    Method name where error occured
+     * @param body          HTTP body from which detected that model is not ready for usage
+     * @returns 
+     */
     public static modelNotReady(methodName: string, body: string){
         return new FusionBrainError(`${methodName}: requested model is not ready for usage now. See \`body\` field for details`, FusionBrainErrorCode.MODEL_NOT_READY, body);
     }

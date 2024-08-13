@@ -14,9 +14,9 @@ export class FusionBrain{
      * Constructor of object which will interact with FusionBrain API
      * By default only API key and Secret key are required.
      * Ability to set endpoint provided for case if any other service will make compatible API
-     * @param {string} apiKey 
-     * @param {string} secretKey 
-     * @param {string} apiEndpoint - optional, by default set to "https://api-key.fusionbrain.ai"
+     * @param {string} apiKey       API key from service
+     * @param {string} secretKey    Secret key from service 
+     * @param {string} apiEndpoint  Optional custom endpoint, by default set to `https://api-key.fusionbrain.ai`
      */
     public constructor(apiKey: string, secretKey: string, apiEndpoint: string = "https://api-key.fusionbrain.ai"){
         this.config = {
@@ -80,10 +80,10 @@ export class FusionBrain{
     /**
      * Request generation of image. With received Task object you can use: `isFinished`, `isCensored`, `isSuccess`.
      * Task is data object and can't update itself, see {@link checkTask} to learn how to get updated status.
-     * @param {number} model_id - numeric id of model, can be obtained from {@link getModels}
-     * @param {string} prompt - describe what you want to see
-     * @param {Prompt} options - object, which includes fields: negative, style, width, height, amount* (see {@link PromptOptions} for details)
-     * @returns {Generation} object with boolean `accepted` field and either `task` if request accepted, or `reason` string if rejected
+     * @param {number} model_id     Numeric id of model, can be obtained from {@link getModels}
+     * @param {string} prompt       Describe what you want to see
+     * @param {Prompt} options      Object, which includes fields: negative, style, width, height, amount* (see {@link PromptOptions} for details)
+     * @returns {Generation}        Object with boolean `accepted` field and either `task` if request accepted, or `reason` string if rejected
      * @example
      * let generation = await client.generate(model, "prompt");
      * if(generation.accepted){
@@ -151,8 +151,8 @@ export class FusionBrain{
 
     /**
      * Get the updated status of task
-     * @param {string} uuid 
-     * @returns {Task}
+     * @param {string} uuid     Generation unique identifier
+     * @returns {Task}          `Task` object with actual info
      * @example
      * let task = await client.generate(...);
      * // wait some time
@@ -184,14 +184,15 @@ export class FusionBrain{
     }
 
     /**
-     * Fetch available styles, @see {@link StyleInfo}
-     * @returns {StyleInfo[]}
+     * Fetch available styles, each has `name` field which may be used for generation, `titleEn` as title and `image` as URL to preview
+     * @see {@link StyleInfo}
+     * @returns {StyleInfo[]}   Array of style objects
      */
     public async getStyles(): Promise<StyleInfo[]>{
         try{
             const response = await axios.get("http://cdn.fusionbrain.ai/static/styles/api");
             if(Array.isArray(response.data)){
-                return response.data.map(obj => StyleInfo.create(obj));
+                return response.data.map((obj: any) => StyleInfo.create(obj));
             }else{
                 throw new TypeError(`FusionBrain.getStyles: Response expected to be array of objects, but non-array object received:\n${JSON.stringify(response.data)}`);
             }
@@ -204,8 +205,9 @@ export class FusionBrain{
     }
 
     /**
-     * Fetch available models, @see {@link ModelInfo}
-     * @returns {ModelInfo[]}
+     * Fetch available models, each has `id` field which is necessary for generation, also `name`, `version` and `type`.
+     * @see {@link ModelInfo}
+     * @returns {ModelInfo[]}   Array of model objects
      */
     public async getModels(): Promise<ModelInfo[]>{
         try{
@@ -216,7 +218,7 @@ export class FusionBrain{
                 }
             });
             if(Array.isArray(response.data)){
-                return response.data.map(obj => ModelInfo.create(obj));
+                return response.data.map((obj: any) => ModelInfo.create(obj));
             }else{
                 throw new TypeError(`FusinBrain.getModels: Response expected to be array of objects, but non-array object received:\n${JSON.stringify(response.data)}`);
             }

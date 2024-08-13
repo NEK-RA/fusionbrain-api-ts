@@ -20,8 +20,9 @@ export type PromptOptions = {
     style?: string;
     /** Negative prompt */
     negative?: string;
-    /** Width and height of image, multiples of 64 are recommended for each side for better results */
+    /** Width of image, multiples of 64 are recommended for better results */
     width?: number;
+    /** Height of image, multiples of 64 are recommended for better results */
     height?: number;
     /** According to docs, only 1 is possible for now. Provided for case if FusionBrain will allow it without breaking changes */
     amount?: number;
@@ -30,4 +31,4 @@ export type PromptOptions = {
 /**
  * Generation task union type for cases when it's accepted and rejected
  */
-export type Generation = {accepted: true, task: Task} | {accepted: false, reason: string};
+export type Generation = { accepted: true, task: Task } | { accepted: false, reason: string };

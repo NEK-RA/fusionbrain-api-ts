@@ -12,10 +12,10 @@ export class StyleInfo{
 
     /**
      * Constructor is private, because object creation is performed with `create` method with checking necessary fields
-     * @param {string} name 
-     * @param {string} title 
-     * @param {string} titleEn 
-     * @param {string} image 
+     * @param {string} name     Style name which is necessary for generaiton
+     * @param {string} title    Style title (in Russian language)
+     * @param {string} titleEn  Style title (in English language)
+     * @param {string} image    URL to preview of style
      */
     private constructor(name: string, title: string, titleEn: string, image: string){
         this.name = name;
@@ -28,7 +28,7 @@ export class StyleInfo{
      * Static method to create instance from JSON parsed object
      * Required fields are strings: name, title, titleEn, image
      * Throws TypeError if any of necessary fields are missing or have wrong types
-     * @param {any} jsonObject 
+     * @param {any} jsonObject  Response body
      * @returns {StyleInfo}
      */
     public static create(jsonObject: any){

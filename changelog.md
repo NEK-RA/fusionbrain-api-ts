@@ -1,3 +1,7 @@
+## 0.0.3
+
+- Changed `axios` version to 1.7.4 due to fix of [CVE-2024-39338](https://github.com/advisories/GHSA-8hc4-vh64-cxmj)
+
 ## 0.0.2
 
 - Enum `FusionBrainErrorCode` includes new value `MODEL_NOT_READY`

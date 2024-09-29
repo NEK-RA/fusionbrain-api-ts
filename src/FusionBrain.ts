@@ -190,7 +190,7 @@ export class FusionBrain{
      */
     public async getStyles(): Promise<StyleInfo[]>{
         try{
-            const response = await axios.get("http://cdn.fusionbrain.ai/static/styles/api");
+            const response = await axios.get("http://cdn.fusionbrain.ai/static/styles/key");
             if(Array.isArray(response.data)){
                 return response.data.map((obj: any) => StyleInfo.create(obj));
             }else{

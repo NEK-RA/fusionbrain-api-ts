@@ -37,8 +37,8 @@ Before the start, to use API you need to:
 
 ```js
 // NodeJS part is only to save image to file
-// import { writeFile} from "node:fs/promises";
-// import { FusionBrain, Prompt } from "fusionbrain-api";
+// import { writeFile } from "node:fs/promises";
+// import { FusionBrain } from "fusionbrain-api";
 const { writeFile } = require("node:fs/promises");
 const { FusionBrain } = require("fusionbrain-api");
 

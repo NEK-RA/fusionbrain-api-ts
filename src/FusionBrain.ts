@@ -82,7 +82,7 @@ export class FusionBrain{
      * Task is data object and can't update itself, see {@link checkTask} to learn how to get updated status.
      * @param {number} model_id     Numeric id of model, can be obtained from {@link getModels}
      * @param {string} prompt       Describe what you want to see
-     * @param {Prompt} options      Object, which includes fields: negative, style, width, height, amount* (see {@link PromptOptions} for details)
+     * @param {PromptOptions} options      Object, which includes fields: negative, style, width, height, amount* (see {@link PromptOptions} for details)
      * @returns {Generation}        Object with boolean `accepted` field and either `task` if request accepted, or `reason` string if rejected
      * @example
      * let generation = await client.generate(model, "prompt");
